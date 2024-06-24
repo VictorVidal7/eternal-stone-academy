@@ -1,24 +1,14 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const swaggerUi = require('swagger-ui-express');
-const swaggerDocument = require('../swagger.json'); // Ajusta esta ruta si es necesario
+const http = require('http');
 const app = require('./app');
+const dotenv = require('dotenv');
 
-dotenv.config();
+const env = process.env.NODE_ENV || 'development';
+dotenv.config({ path: `.env.${env}` });
 
-const PORT = process.env.PORT || 5000;
+const port = process.env.PORT || 5000;
 
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('MongoDB connected');
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-})
-.catch(err => console.error(err));
+const server = http.createServer(app);
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+server.listen(port, () => {
+  console.log(`Server running on port ${port} in ${env} mode`);
+});
