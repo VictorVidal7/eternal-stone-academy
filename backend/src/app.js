@@ -19,9 +19,13 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 // Rutas
 const userRoutes = require('./routes/userRoutes');
-const courseRoutes = require('./routes/courseRoutes');  // Asegúrate de que esta línea exista
+const courseRoutes = require('./routes/courseRoutes');
 
 app.use('/api/users', userRoutes);
-app.use('/api/courses', courseRoutes);  // Asegúrate de que esta línea exista
+app.use('/api/courses', courseRoutes);
+
+// Swagger
+const swaggerDocs = require('./swagger');
+swaggerDocs(app);
 
 module.exports = app;
