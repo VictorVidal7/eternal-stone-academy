@@ -1,7 +1,9 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+// src/models/user.js
 
-const UserSchema = new mongoose.Schema({
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
+const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -18,28 +20,23 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     default: 'student',
-    enum: ['student', 'instructor', 'admin'],
-  },
-  date: {
-    type: Date,
-    default: Date.now,
   },
 });
 
-// Hash password before saving
-UserSchema.pre('save', async function(next) {
+userSchema.index({ email: 1 }); // Update from ensureIndex to createIndex
+
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-// Compare password
-UserSchema.methods.comparePassword = async function(candidatePassword) {
-  console.log('Comparing passwords:', candidatePassword, this.password); // Agregar depuración
-  return bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.comparePassword = function (password) {
+  return bcrypt.compare(password, this.password);
 };
 
-module.exports = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;
