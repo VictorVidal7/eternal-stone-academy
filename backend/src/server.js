@@ -1,21 +1,9 @@
+// src/server.js
 
 const express = require('express');
-const connectDB = require('./config/db');
-const dotenv = require('dotenv');
+const app = require('./app'); // Asegúrate de que el archivo app.js esté en la ruta correcta
+const port = process.env.PORT || 5000;
 
-dotenv.config();
-
-const app = express();
-
-// Connect to database
-connectDB();
-
-// Init Middleware
-app.use(express.json());
-
-// Define Routes
-app.use('/api/users', require('./routes/userRoutes'));
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});

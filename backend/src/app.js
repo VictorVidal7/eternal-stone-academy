@@ -1,40 +1,32 @@
-
 const express = require('express');
-const connectDB = require('./config/db');
-const dotenv = require('dotenv');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 const cors = require('cors');
-const auth = require('./middleware/auth');
-const protect = require('./middleware/protect');
-const logger = require('./middleware/logger');
-const swagger = require('./config/swagger');
+const morgan = require('morgan');
+const dotenv = require('dotenv');
+
+const userRoutes = require('./routes/userRoutes');
+const courseRoutes = require('./routes/courseRoutes');
+const assessmentRoutes = require('./routes/assessmentRoutes');
 
 dotenv.config();
 
 const app = express();
 
-// Connect to database
-connectDB();
-
-// Init Middleware
-app.use(express.json());
 app.use(cors());
-app.use(logger);
-app.use(protect);
+app.use(morgan('dev'));
+app.use(bodyParser.json());
 
-// Define Routes
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/courses', require('./routes/courseRoutes'));
-app.use('/api/contents', require('./routes/contentRoutes'));
-app.use('/api/assessments', require('./routes/assessmentRoutes'));
-app.use('/api/forums', require('./routes/forumRoutes'));
-app.use('/api/posts', require('./routes/postRoutes'));
-app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
-app.use('/api/reports', require('./routes/reportRoutes'));
-app.use('/api/public', require('./routes/apiRoutes'));
+app.use('/api/users', userRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/assessments', assessmentRoutes);
 
-// Swagger Docs
-swagger(app);
+const dbURI = process.env.NODE_ENV === 'test' ? process.env.MONGODB_TEST_URI : process.env.MONGODB_URI;
 
-const PORT = process.env.PORT || 5000;
+mongoose.connect(dbURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+module.exports = app;
