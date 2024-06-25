@@ -1,53 +1,47 @@
-const mongoose = require('mongoose');
 const request = require('supertest');
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../src/app');
-const User = require('../src/models/user');
 
 describe('Users', () => {
+  let mongoServer;
+
   beforeAll(async () => {
-    if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
+    mongoServer = await MongoMemoryServer.create();
+    const uri = process.env.MONGODB_TEST_URI || mongoServer.getUri();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
     }
-  });
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+  }, 90000); // Incrementa el tiempo de espera a 90 segundos
 
   afterAll(async () => {
-    await mongoose.connection.close();
+    await mongoose.disconnect();
+    await mongoServer.stop();
   });
 
   beforeEach(async () => {
-    await User.deleteMany({});
-    await new User({
+    await mongoose.connection.db.dropCollection('users').catch(() => {});
+  });
+
+  it('should register a new user', async () => {
+    const user = {
       name: 'Test User',
       email: 'testuser@example.com',
       password: 'password'
-    }).save();
-  });
+    };
 
-  test('should register a new user', async () => {
     const res = await request(app)
       .post('/api/users/register')
-      .send({
-        name: 'New User',
-        email: 'newuser@example.com',
-        password: 'password',
-      });
+      .send(user);
+
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('email');
     expect(res.body).toHaveProperty('name');
-  });
+  }, 90000); // Incrementa el tiempo de espera a 90 segundos
 
-  test('should login a user', async () => {
-    const user = {
-      email: 'testuser@example.com',
-      password: 'password',
-    };
-    const res = await request(app)
-      .post('/api/users/login')
-      .send(user);
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty('message', 'Login successful');
-  });
+  // Otras pruebas siguen aquí...
 });

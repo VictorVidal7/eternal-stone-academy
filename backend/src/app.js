@@ -1,31 +1,29 @@
-const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const cors = require('cors');
-
-dotenv.config();
-
+const express = require('express');
 const app = express();
+require('dotenv').config();
 
-app.use(cors());
+const mongoURI = process.env.MONGODB_URI;
+
+async function connectToMongo() {
+  if (mongoose.connection.readyState === 0) {
+    try {
+      await mongoose.connect(mongoURI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      });
+      console.log('Connected to MongoDB');
+    } catch (err) {
+      console.error('Could not connect to MongoDB', err);
+    }
+  }
+}
+
+connectToMongo();
+
+// Middleware y rutas
 app.use(express.json());
-
-const mongoURI = process.env.NODE_ENV === 'test' ? process.env.MONGODB_TEST_URI : process.env.MONGODB_URI;
-const env = process.env.NODE_ENV || 'development';
-
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log(`Connected to MongoDB (${env} mode)`))
-  .catch(err => console.error('Could not connect to MongoDB', err));
-
-// Rutas
-const userRoutes = require('./routes/userRoutes');
-const courseRoutes = require('./routes/courseRoutes');
-
-app.use('/api/users', userRoutes);
-app.use('/api/courses', courseRoutes);
-
-// Swagger
-const swaggerDocs = require('./swagger');
-swaggerDocs(app);
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/courses', require('./routes/courseRoutes'));
 
 module.exports = app;
