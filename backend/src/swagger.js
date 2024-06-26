@@ -1,5 +1,3 @@
-// src/swagger.js
-
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
@@ -14,6 +12,9 @@ const options = {
     servers: [
       {
         url: 'http://localhost:5000',
+      },
+      {
+        url: 'https://api.eternalstoneacademy.com', // Example for production
       },
     ],
   },

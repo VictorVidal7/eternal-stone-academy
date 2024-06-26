@@ -12,10 +12,7 @@ describe('Courses', () => {
     if (mongoose.connection.readyState !== 0) {
       await mongoose.disconnect();
     }
-    await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    await mongoose.connect(uri); // Opciones obsoletas eliminadas
   }, 90000); // Incrementa el tiempo de espera a 90 segundos
 
   afterAll(async () => {
