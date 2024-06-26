@@ -1,8 +1,8 @@
-
 const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
 const userController = require('../controllers/userController');
+const protect = require('../middleware/protect');
 
 router.post(
   '/register',
@@ -22,5 +22,7 @@ router.post(
   ],
   userController.loginUser
 );
+
+router.put('/:id', protect, userController.updateUser); // Nueva ruta para actualizar usuarios
 
 module.exports = router;

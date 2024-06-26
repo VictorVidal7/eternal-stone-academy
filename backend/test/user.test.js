@@ -66,5 +66,37 @@ describe('Users', () => {
     expect(res.body.user).toHaveProperty('email', 'testuser@example.com');
   }, 90000); // Incrementa el tiempo de espera a 90 segundos
 
+  it('should update a user', async () => {
+    const user = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'password'
+    };
+
+    // Primero registramos el usuario
+    const resRegister = await request(app)
+      .post('/api/users/register')
+      .send(user);
+
+    const userId = resRegister.body._id;
+    const token = resRegister.body.token;
+
+    // Luego actualizamos la información del usuario
+    const updatedUser = {
+      name: 'Updated Test User',
+      email: 'updatedtestuser@example.com',
+      password: 'newpassword'
+    };
+
+    const resUpdate = await request(app)
+      .put(`/api/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(updatedUser);
+
+    expect(resUpdate.statusCode).toEqual(200);
+    expect(resUpdate.body).toHaveProperty('name', 'Updated Test User');
+    expect(resUpdate.body).toHaveProperty('email', 'updatedtestuser@example.com');
+  }, 90000); // Incrementa el tiempo de espera a 90 segundos
+
   // Otras pruebas siguen aquí...
 });
