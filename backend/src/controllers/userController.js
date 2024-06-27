@@ -16,6 +16,9 @@ exports.registerUser = async (req, res) => {
     res.status(201).json({ ...user.toObject(), token });
   } catch (error) {
     console.log('Register User: Error during registration:', error.message);
+    if (error.code === 11000) { // Error de duplicación en MongoDB
+      return res.status(400).json({ error: 'Email already exists' });
+    }
     res.status(400).json({ error: error.message });
   }
 };

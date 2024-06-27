@@ -1,5 +1,3 @@
-// src/models/user.js
-
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
@@ -23,7 +21,7 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.index({ email: 1 }); // Update from ensureIndex to createIndex
+userSchema.index({ email: 1 }, { unique: true }); // Asegurarse de que este índice esté presente
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {

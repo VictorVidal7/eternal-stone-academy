@@ -2,6 +2,7 @@ const request = require('supertest');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../src/app');
+const User = require('../src/models/user'); // Añadido aquí
 
 describe('Users', () => {
   let mongoServer;
@@ -48,6 +49,26 @@ describe('Users', () => {
     expect(res.body).toHaveProperty('name');
   }, 90000);
 
+  it('should register a user successfully with valid data', async () => {
+    const userData = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'Password123',
+    };
+
+    const response = await request(app)
+      .post('/api/users/register')
+      .send(userData)
+      .expect(201);
+
+    expect(response.body).toHaveProperty('token');
+    expect(response.body).toHaveProperty('name', userData.name);
+    expect(response.body).toHaveProperty('email', userData.email);
+
+    const user = await User.findOne({ email: userData.email });
+    expect(user).not.toBeNull();
+  }, 90000);
+
   it('should not register a user with invalid data', async () => {
     const user = {
       name: '',
@@ -63,6 +84,29 @@ describe('Users', () => {
 
     expect(res.statusCode).toEqual(400);
     expect(res.body).toHaveProperty('error');
+  }, 90000);
+
+  it('should not register a user with a duplicate email', async () => {
+    const user = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'password'
+    };
+  
+    // Register the first user
+    await request(app)
+      .post('/api/users/register')
+      .send(user);
+  
+    // Try to register another user with the same email
+    const res = await request(app)
+      .post('/api/users/register')
+      .send(user);
+  
+    console.log('Response from register duplicate email user:', res.body);
+  
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Email already exists');
   }, 90000);
 
   it('should login a registered user', async () => {
@@ -257,5 +301,52 @@ describe('Users', () => {
 
     expect(resGet.statusCode).toEqual(401);
     expect(resGet.body).toHaveProperty('msg', 'No token, authorization denied');
+  }, 90000);
+  it('should not register a user without a name', async () => {
+    const user = {
+      email: 'testuser@example.com',
+      password: 'password'
+    };
+  
+    const res = await request(app)
+      .post('/api/users/register')
+      .send(user);
+  
+    console.log('Response from register without name:', res.body);
+  
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
+  }, 90000);
+  
+  it('should not register a user without an email', async () => {
+    const user = {
+      name: 'Test User',
+      password: 'password'
+    };
+  
+    const res = await request(app)
+      .post('/api/users/register')
+      .send(user);
+  
+    console.log('Response from register without email:', res.body);
+  
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
+  }, 90000);
+  
+  it('should not register a user without a password', async () => {
+    const user = {
+      name: 'Test User',
+      email: 'testuser@example.com'
+    };
+  
+    const res = await request(app)
+      .post('/api/users/register')
+      .send(user);
+  
+    console.log('Response from register without password:', res.body);
+  
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
   }, 90000);
 });
