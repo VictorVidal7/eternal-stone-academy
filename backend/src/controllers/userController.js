@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 exports.registerUser = async (req, res) => {
   console.log('Register User: Request body:', req.body);
@@ -55,16 +56,29 @@ exports.loginUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   console.log('Update User: Request params:', req.params);
   console.log('Update User: Request body:', req.body);
+
+  const { name, email, password } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required' });
+  }
+
+  if (password && password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+  }
+
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || password.length < 6) {
-      throw new Error('Invalid data');
+    const updatedData = { name, email };
+    if (password) {
+      updatedData.password = await bcrypt.hash(password, 10);
     }
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    const user = await User.findByIdAndUpdate(req.params.id, updatedData, { new: true });
     if (!user) {
       console.log('Update User: User not found');
-      return res.status(404).json({ msg: 'User not found' });
+      return res.status(404).json({ error: 'User not found' });
     }
+
     console.log('Update User: Updated user:', user);
     res.status(200).json(user);
   } catch (error) {

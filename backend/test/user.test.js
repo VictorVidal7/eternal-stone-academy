@@ -421,4 +421,54 @@ it('should not login a user with incorrect password', async () => {
   expect(res.body).toHaveProperty('error', 'Invalid credentials');
 }, 90000);
 
+it('should not login a user with an unregistered email', async () => {
+  const user = {
+    email: 'notregistered@example.com',
+    password: 'password'
+  };
+
+  // Attempt to login with unregistered email
+  const res = await request(app)
+    .post('/api/users/login')
+    .send(user);
+
+  console.log('Response from login with unregistered email:', res.body);
+
+  expect(res.statusCode).toEqual(400);
+  expect(res.body).toHaveProperty('error', 'Invalid credentials');
+}, 90000);
+
+it('should update a user\'s information successfully', async () => {
+  const user = {
+    name: 'Test User',
+    email: 'testuser@example.com',
+    password: 'password'
+  };
+
+  // Register the user first
+  const registerRes = await request(app)
+    .post('/api/users/register')
+    .send(user);
+
+  const userId = registerRes.body._id;
+  const token = registerRes.body.token;
+
+  const updatedData = {
+    name: 'Updated User',
+    email: 'updateduser@example.com'
+  };
+
+  // Attempt to update user's information
+  const res = await request(app)
+    .put(`/api/users/${userId}`)
+    .set('x-auth-token', token)
+    .send(updatedData);
+
+  console.log('Response from update user\'s information:', res.body);
+
+  expect(res.statusCode).toEqual(200);
+  expect(res.body).toHaveProperty('name', updatedData.name);
+  expect(res.body).toHaveProperty('email', updatedData.email);
+}, 90000);
+
 });
