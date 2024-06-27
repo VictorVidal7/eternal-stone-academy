@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { check } = require('express-validator');
 const userController = require('../controllers/userController');
+const auth = require('../middleware/auth');
 const protect = require('../middleware/protect');
+const role = require('../middleware/role');
 
 router.post(
   '/register',
@@ -23,7 +25,8 @@ router.post(
   userController.loginUser
 );
 
-router.put('/:id', protect, userController.updateUser); // Ruta para actualizar usuarios
-router.delete('/:id', protect, userController.deleteUser); // Ruta para eliminar usuarios
+router.put('/:id', auth, protect, userController.updateUser);
+router.delete('/:id', auth, protect, userController.deleteUser);
+router.get('/:id', auth, protect, role(['admin', 'student']), userController.getUser);
 
 module.exports = router;

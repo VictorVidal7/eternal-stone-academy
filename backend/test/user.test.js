@@ -12,16 +12,22 @@ describe('Users', () => {
     if (mongoose.connection.readyState !== 0) {
       await mongoose.disconnect();
     }
-    await mongoose.connect(uri); // Opciones obsoletas eliminadas
-  }, 90000); // Incrementa el tiempo de espera a 90 segundos
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('Connected to MongoDB for testing');
+  }, 90000);
 
   afterAll(async () => {
     await mongoose.disconnect();
     await mongoServer.stop();
+    console.log('Disconnected from MongoDB');
   });
 
   beforeEach(async () => {
     await mongoose.connection.db.dropCollection('users').catch(() => {});
+    console.log('Dropped users collection before test');
   });
 
   it('should register a new user', async () => {
@@ -35,10 +41,29 @@ describe('Users', () => {
       .post('/api/users/register')
       .send(user);
 
+    console.log('Response from register user:', res.body);
+
     expect(res.statusCode).toEqual(201);
     expect(res.body).toHaveProperty('email');
     expect(res.body).toHaveProperty('name');
-  }, 90000); // Incrementa el tiempo de espera a 90 segundos
+  }, 90000);
+
+  it('should not register a user with invalid data', async () => {
+    const user = {
+      name: '',
+      email: 'invalidemail',
+      password: 'short'
+    };
+
+    const res = await request(app)
+      .post('/api/users/register')
+      .send(user);
+
+    console.log('Response from register invalid user:', res.body);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error');
+  }, 90000);
 
   it('should login a registered user', async () => {
     const user = {
@@ -47,12 +72,10 @@ describe('Users', () => {
       password: 'password'
     };
 
-    // Primero registramos el usuario
     await request(app)
       .post('/api/users/register')
       .send(user);
 
-    // Luego intentamos iniciar sesión
     const res = await request(app)
       .post('/api/users/login')
       .send({
@@ -60,11 +83,36 @@ describe('Users', () => {
         password: 'password'
       });
 
+    console.log('Response from login user:', res.body);
+
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('token');
-    expect(res.body).toHaveProperty('user');
     expect(res.body.user).toHaveProperty('email', 'testuser@example.com');
-  }, 90000); // Incrementa el tiempo de espera a 90 segundos
+  }, 90000);
+
+  it('should not login a user with wrong password', async () => {
+    const user = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'password'
+    };
+
+    await request(app)
+      .post('/api/users/register')
+      .send(user);
+
+    const res = await request(app)
+      .post('/api/users/login')
+      .send({
+        email: 'testuser@example.com',
+        password: 'wrongpassword'
+      });
+
+    console.log('Response from login invalid user:', res.body);
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty('error', 'Invalid credentials');
+  }, 90000);
 
   it('should update a user', async () => {
     const user = {
@@ -73,15 +121,14 @@ describe('Users', () => {
       password: 'password'
     };
 
-    // Primero registramos el usuario
     const resRegister = await request(app)
       .post('/api/users/register')
       .send(user);
 
     const userId = resRegister.body._id;
     const token = resRegister.body.token;
+    console.log('User registered for update test:', resRegister.body);
 
-    // Luego actualizamos la información del usuario
     const updatedUser = {
       name: 'Updated Test User',
       email: 'updatedtestuser@example.com',
@@ -90,13 +137,72 @@ describe('Users', () => {
 
     const resUpdate = await request(app)
       .put(`/api/users/${userId}`)
-      .set('Authorization', `Bearer ${token}`)
+      .set('x-auth-token', token)
       .send(updatedUser);
+
+    console.log('Response from update user:', resUpdate.body);
 
     expect(resUpdate.statusCode).toEqual(200);
     expect(resUpdate.body).toHaveProperty('name', 'Updated Test User');
     expect(resUpdate.body).toHaveProperty('email', 'updatedtestuser@example.com');
-  }, 90000); // Incrementa el tiempo de espera a 90 segundos
+  }, 90000);
+
+  it('should not update a user with invalid data', async () => {
+    const user = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'password'
+    };
+
+    const resRegister = await request(app)
+      .post('/api/users/register')
+      .send(user);
+
+    const userId = resRegister.body._id;
+    const token = resRegister.body.token;
+    console.log('User registered for invalid update test:', resRegister.body);
+
+    const updatedUser = {
+      name: '',
+      email: 'invalidemail',
+      password: 'short'
+    };
+
+    const resUpdate = await request(app)
+      .put(`/api/users/${userId}`)
+      .set('x-auth-token', token)
+      .send(updatedUser);
+
+    console.log('Response from invalid update user:', resUpdate.body);
+
+    expect(resUpdate.statusCode).toEqual(400);
+    expect(resUpdate.body).toHaveProperty('error');
+  }, 90000);
+
+  it('should get a registered user info', async () => {
+    const user = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'password'
+    };
+
+    const resRegister = await request(app)
+      .post('/api/users/register')
+      .send(user);
+
+    const userId = resRegister.body._id;
+    const token = resRegister.body.token;
+    console.log('User registered for get info test:', resRegister.body);
+
+    const resGet = await request(app)
+      .get(`/api/users/${userId}`)
+      .set('x-auth-token', token);
+
+    console.log('Response from get user info:', resGet.body);
+
+    expect(resGet.statusCode).toEqual(200);
+    expect(resGet.body).toHaveProperty('email', 'testuser@example.com');
+  }, 90000);
 
   it('should delete a user', async () => {
     const user = {
@@ -105,28 +211,51 @@ describe('Users', () => {
       password: 'password'
     };
 
-    // Primero registramos el usuario
     const resRegister = await request(app)
       .post('/api/users/register')
       .send(user);
 
     const userId = resRegister.body._id;
     const token = resRegister.body.token;
+    console.log('User registered for delete test:', resRegister.body);
 
-    // Luego eliminamos el usuario
     const resDelete = await request(app)
       .delete(`/api/users/${userId}`)
-      .set('Authorization', `Bearer ${token}`);
+      .set('x-auth-token', token);
+
+    console.log('Response from delete user:', resDelete.body);
 
     expect(resDelete.statusCode).toEqual(200);
 
-    // Verificamos que el usuario ha sido eliminado
     const resGet = await request(app)
       .get(`/api/users/${userId}`)
-      .set('Authorization', `Bearer ${token}`);
+      .set('x-auth-token', token);
+
+    console.log('Response from get deleted user:', resGet.body);
 
     expect(resGet.statusCode).toEqual(404);
-  }, 90000); // Incrementa el tiempo de espera a 90 segundos
+  }, 90000);
 
-  // Otras pruebas siguen aquí...
+  it('should not allow access to protected routes without a token', async () => {
+    const user = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'password'
+    };
+
+    const resRegister = await request(app)
+      .post('/api/users/register')
+      .send(user);
+
+    const userId = resRegister.body._id;
+    console.log('User registered for no token test:', resRegister.body);
+
+    const resGet = await request(app)
+      .get(`/api/users/${userId}`);
+
+    console.log('Response from get user without token:', resGet.body);
+
+    expect(resGet.statusCode).toEqual(401);
+    expect(resGet.body).toHaveProperty('msg', 'No token, authorization denied');
+  }, 90000);
 });
