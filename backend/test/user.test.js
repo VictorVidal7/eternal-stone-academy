@@ -98,5 +98,35 @@ describe('Users', () => {
     expect(resUpdate.body).toHaveProperty('email', 'updatedtestuser@example.com');
   }, 90000); // Incrementa el tiempo de espera a 90 segundos
 
+  it('should delete a user', async () => {
+    const user = {
+      name: 'Test User',
+      email: 'testuser@example.com',
+      password: 'password'
+    };
+
+    // Primero registramos el usuario
+    const resRegister = await request(app)
+      .post('/api/users/register')
+      .send(user);
+
+    const userId = resRegister.body._id;
+    const token = resRegister.body.token;
+
+    // Luego eliminamos el usuario
+    const resDelete = await request(app)
+      .delete(`/api/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(resDelete.statusCode).toEqual(200);
+
+    // Verificamos que el usuario ha sido eliminado
+    const resGet = await request(app)
+      .get(`/api/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(resGet.statusCode).toEqual(404);
+  }, 90000); // Incrementa el tiempo de espera a 90 segundos
+
   // Otras pruebas siguen aquí...
 });

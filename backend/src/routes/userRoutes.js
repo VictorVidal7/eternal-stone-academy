@@ -23,6 +23,7 @@ router.post(
   userController.loginUser
 );
 
-router.put('/:id', protect, userController.updateUser); // Nueva ruta para actualizar usuarios
+router.put('/:id', protect, userController.updateUser); // Ruta para actualizar usuarios
+router.delete('/:id', protect, userController.deleteUser); // Ruta para eliminar usuarios
 
 module.exports = router;
