@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+    minlength: 6, // Asegurarse de que este campo esté presente para la longitud mínima
   },
   role: {
     type: String,
@@ -21,7 +22,7 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.index({ email: 1 }, { unique: true }); // Asegurarse de que este índice esté presente
+userSchema.index({ email: 1 }, { unique: true });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {

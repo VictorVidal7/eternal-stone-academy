@@ -303,50 +303,67 @@ describe('Users', () => {
     expect(resGet.body).toHaveProperty('msg', 'No token, authorization denied');
   }, 90000);
   it('should not register a user without a name', async () => {
-    const user = {
-      email: 'testuser@example.com',
-      password: 'password'
-    };
-  
-    const res = await request(app)
-      .post('/api/users/register')
-      .send(user);
-  
-    console.log('Response from register without name:', res.body);
-  
-    expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty('error');
-  }, 90000);
-  
-  it('should not register a user without an email', async () => {
-    const user = {
-      name: 'Test User',
-      password: 'password'
-    };
-  
-    const res = await request(app)
-      .post('/api/users/register')
-      .send(user);
-  
-    console.log('Response from register without email:', res.body);
-  
-    expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty('error');
-  }, 90000);
-  
-  it('should not register a user without a password', async () => {
-    const user = {
-      name: 'Test User',
-      email: 'testuser@example.com'
-    };
-  
-    const res = await request(app)
-      .post('/api/users/register')
-      .send(user);
-  
-    console.log('Response from register without password:', res.body);
-  
-    expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty('error');
-  }, 90000);
+  const user = {
+    email: 'testuser@example.com',
+    password: 'password'
+  };
+
+  const res = await request(app)
+    .post('/api/users/register')
+    .send(user);
+
+  console.log('Response from register without name:', res.body);
+
+  expect(res.statusCode).toEqual(400);
+  expect(res.body).toHaveProperty('error');
+}, 90000);
+
+it('should not register a user without an email', async () => {
+  const user = {
+    name: 'Test User',
+    password: 'password'
+  };
+
+  const res = await request(app)
+    .post('/api/users/register')
+    .send(user);
+
+  console.log('Response from register without email:', res.body);
+
+  expect(res.statusCode).toEqual(400);
+  expect(res.body).toHaveProperty('error');
+}, 90000);
+
+it('should not register a user without a password', async () => {
+  const user = {
+    name: 'Test User',
+    email: 'testuser@example.com'
+  };
+
+  const res = await request(app)
+    .post('/api/users/register')
+    .send(user);
+
+  console.log('Response from register without password:', res.body);
+
+  expect(res.statusCode).toEqual(400);
+  expect(res.body).toHaveProperty('error');
+}, 90000);
+
+it('should not register a user with a weak password', async () => {
+  const user = {
+    name: 'Test User',
+    email: 'testuser@example.com',
+    password: '123' // Contraseña débil
+  };
+
+  const res = await request(app)
+    .post('/api/users/register')
+    .send(user);
+
+  console.log('Response from register with weak password:', res.body);
+
+  expect(res.statusCode).toEqual(400);
+  expect(res.body).toHaveProperty('error');
+}, 90000);
 });
