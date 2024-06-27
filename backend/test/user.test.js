@@ -366,4 +366,59 @@ it('should not register a user with a weak password', async () => {
   expect(res.statusCode).toEqual(400);
   expect(res.body).toHaveProperty('error');
 }, 90000);
+
+it('should login a registered user successfully with correct credentials', async () => {
+  const user = {
+    name: 'Test User',
+    email: 'testuser@example.com',
+    password: 'password'
+  };
+
+  // Register the user first
+  await request(app)
+    .post('/api/users/register')
+    .send(user);
+
+  // Attempt to login with correct credentials
+  const res = await request(app)
+    .post('/api/users/login')
+    .send({
+      email: user.email,
+      password: user.password
+    });
+
+  console.log('Response from successful login:', res.body);
+
+  expect(res.statusCode).toEqual(200);
+  expect(res.body).toHaveProperty('token');
+  expect(res.body.user).toHaveProperty('email', user.email);
+  expect(res.body.user).toHaveProperty('name', user.name);
+}, 90000);
+
+it('should not login a user with incorrect password', async () => {
+  const user = {
+    name: 'Test User',
+    email: 'testuser@example.com',
+    password: 'password'
+  };
+
+  // Register the user first
+  await request(app)
+    .post('/api/users/register')
+    .send(user);
+
+  // Attempt to login with incorrect password
+  const res = await request(app)
+    .post('/api/users/login')
+    .send({
+      email: user.email,
+      password: 'wrongpassword'
+    });
+
+  console.log('Response from login with incorrect password:', res.body);
+
+  expect(res.statusCode).toEqual(400);
+  expect(res.body).toHaveProperty('error', 'Invalid credentials');
+}, 90000);
+
 });
