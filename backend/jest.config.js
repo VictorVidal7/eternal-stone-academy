@@ -4,5 +4,10 @@ module.exports = {
   },
   testEnvironment: 'node',
   setupFilesAfterEnv: ['./jest.setup.js'],
-  testTimeout: 90000 // Aumenta el tiempo de espera global para todas las pruebas
+  testTimeout: 30000, // Reducido a 30 segundos
+  collectCoverage: true,
+  collectCoverageFrom: ['src/**/*.js'],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov'],
+  maxWorkers: '50%', // Ejecuta pruebas en paralelo
 };

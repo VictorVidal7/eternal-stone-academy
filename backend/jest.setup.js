@@ -1,1 +1,1 @@
-jest.setTimeout(90000); // Aumenta el tiempo de espera global para todas las pruebas
+jest.setTimeout(30000); // Reducido a 30 segundos

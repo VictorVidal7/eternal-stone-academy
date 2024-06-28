@@ -11,12 +11,23 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000',
-      },
-      {
-        url: 'https://api.eternalstoneacademy.com', // Example for production
+        url: process.env.NODE_ENV === 'production' 
+          ? 'https://api.eternalstoneacademy.com' 
+          : 'http://localhost:5000',
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{
+      bearerAuth: []
+    }]
   },
   apis: ['./src/routes/*.js'],
 };

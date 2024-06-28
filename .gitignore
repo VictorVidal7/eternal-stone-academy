@@ -86,3 +86,6 @@ temp/
 
 # MongoDB files
 /data/db/
+
+.env
+coverage/

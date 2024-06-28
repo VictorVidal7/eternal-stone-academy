@@ -4,8 +4,13 @@
     "description": "A backend for Eternal Stone Academy",
     "main": "src/server.js",
     "scripts": {
-        "start": "node src/server.js",
-        "test": "jest"
+        "start": "cross-env NODE_ENV=production node src/server.js",
+        "dev": "cross-env NODE_ENV=development nodemon src/server.js",
+        "test": "cross-env NODE_ENV=test jest",
+        "test:watch": "cross-env NODE_ENV=test jest --watch",
+        "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix"
     },
     "dependencies": {
         "bcrypt": "^5.1.0",
@@ -13,18 +18,33 @@
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.18.2",
+        "express-rate-limit": "^6.7.0",
         "express-validator": "^6.14.2",
+        "helmet": "^7.1.0",
         "jsonwebtoken": "^9.0.2",
         "mongoose": "^8.4.3",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1"
     },
     "devDependencies": {
+        "@babel/core": "^7.23.9",
+        "@babel/preset-env": "^7.23.9",
+        "cross-env": "^7.0.3",
+        "eslint": "^8.56.0",
         "jest": "^29.7.0",
         "mongodb-memory-server": "^9.4.0",
+        "nodemon": "^3.1.4",
         "supertest": "^7.0.0"
     },
-    "keywords": [],
-    "author": "",
+    "engines": {
+        "node": ">=14.0.0"
+    },
+    "keywords": [
+        "education",
+        "online learning",
+        "backend",
+        "api"
+    ],
+    "author": "Eternal Stone Academy",
     "license": "ISC"
 }
