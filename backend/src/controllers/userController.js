@@ -7,6 +7,18 @@ exports.registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    // Validaciones
+    if (!name || !email || !password) {
+      return res.status(400).json({ errors: [{ msg: 'All fields are required' }] });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ errors: [{ msg: 'Password must be at least 6 characters long' }] });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ errors: [{ msg: 'Email already exists' }] });
+    }
     const user = new User({ name, email, password });
     await user.save();
 
@@ -17,10 +29,10 @@ exports.registerUser = async (req, res) => {
     res.status(201).json({ ...user.toObject(), token });
   } catch (error) {
     console.log('Register User: Error during registration:', error.message);
-    if (error.code === 11000) { // Error de duplicación en MongoDB
-      return res.status(400).json({ error: 'Email already exists' });
+    if (error.code === 11000) {
+      return res.status(400).json({ errors: [{ msg: 'Email already exists' }] });
     }
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ errors: [{ msg: error.message }] });
   }
 };
 
@@ -31,16 +43,14 @@ exports.loginUser = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      console.log('Login User: User not found with email:', email);
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(400).json({ errors: [{ msg: 'Invalid credentials' }] });
     }
 
     const isMatch = await user.comparePassword(password);
     console.log('Login User: Password match:', isMatch);
 
     if (!isMatch) {
-      console.log('Login User: Password does not match');
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(400).json({ errors: [{ msg: 'Invalid credentials' }] });
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -60,11 +70,11 @@ exports.updateUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   if (!name || !email) {
-    return res.status(400).json({ error: 'Name and email are required' });
+    return res.status(400).json({ errors: [{ msg: 'Name and email are required' }] });
   }
 
   if (password && password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    return res.status(400).json({ errors: [{ msg: 'Password must be at least 6 characters long' }] });
   }
 
   try {

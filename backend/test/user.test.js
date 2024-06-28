@@ -75,22 +75,23 @@ describe('Users', () => {
       email: 'invalidemail',
       password: 'short'
     };
-
+  
     const res = await request(app)
       .post('/api/users/register')
       .send(user);
-
+  
     console.log('Response from register invalid user:', res.body);
-
+  
     expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty('error');
+    expect(res.body).toHaveProperty('errors');
+    expect(res.body.errors).toBeInstanceOf(Array);
   }, 90000);
 
   it('should not register a user with a duplicate email', async () => {
     const user = {
       name: 'Test User',
       email: 'testuser@example.com',
-      password: 'password'
+      password: 'password123'
     };
   
     // Register the first user
@@ -106,7 +107,9 @@ describe('Users', () => {
     console.log('Response from register duplicate email user:', res.body);
   
     expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty('error', 'Email already exists');
+    expect(res.body).toHaveProperty('errors');
+    expect(res.body.errors[0]).toHaveProperty('msg', 'Email already exists');
+    expect(res.body.errors).toBeInstanceOf(Array);
   }, 90000);
 
   it('should login a registered user', async () => {
@@ -140,22 +143,24 @@ describe('Users', () => {
       email: 'testuser@example.com',
       password: 'password'
     };
-
+  
     await request(app)
       .post('/api/users/register')
       .send(user);
-
+  
     const res = await request(app)
       .post('/api/users/login')
       .send({
         email: 'testuser@example.com',
         password: 'wrongpassword'
       });
-
+  
     console.log('Response from login invalid user:', res.body);
-
+  
     expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty('error', 'Invalid credentials');
+    expect(res.body).toHaveProperty('errors');
+    expect(res.body.errors).toBeInstanceOf(Array);
+    expect(res.body.errors[0]).toHaveProperty('msg', 'Invalid credentials');
   }, 90000);
 
   it('should update a user', async () => {
@@ -220,7 +225,9 @@ describe('Users', () => {
     console.log('Response from invalid update user:', resUpdate.body);
 
     expect(resUpdate.statusCode).toEqual(400);
-    expect(resUpdate.body).toHaveProperty('error');
+    expect(resUpdate.body).toHaveProperty('errors');
+    expect(resUpdate.body.errors).toBeInstanceOf(Array);
+    expect(resUpdate.body.errors[0]).toHaveProperty('msg');
   }, 90000);
 
   it('should get a registered user info', async () => {
@@ -302,6 +309,7 @@ describe('Users', () => {
     expect(resGet.statusCode).toEqual(401);
     expect(resGet.body).toHaveProperty('msg', 'No token, authorization denied');
   }, 90000);
+
   it('should not register a user without a name', async () => {
   const user = {
     email: 'testuser@example.com',
@@ -315,7 +323,8 @@ describe('Users', () => {
   console.log('Response from register without name:', res.body);
 
   expect(res.statusCode).toEqual(400);
-  expect(res.body).toHaveProperty('error');
+  expect(res.body).toHaveProperty('errors');
+  expect(res.body.errors).toBeInstanceOf(Array);
 }, 90000);
 
 it('should not register a user without an email', async () => {
@@ -331,7 +340,8 @@ it('should not register a user without an email', async () => {
   console.log('Response from register without email:', res.body);
 
   expect(res.statusCode).toEqual(400);
-  expect(res.body).toHaveProperty('error');
+  expect(res.body).toHaveProperty('errors');
+  expect(res.body.errors).toBeInstanceOf(Array);
 }, 90000);
 
 it('should not register a user without a password', async () => {
@@ -347,7 +357,8 @@ it('should not register a user without a password', async () => {
   console.log('Response from register without password:', res.body);
 
   expect(res.statusCode).toEqual(400);
-  expect(res.body).toHaveProperty('error');
+  expect(res.body).toHaveProperty('errors');
+  expect(res.body.errors).toBeInstanceOf(Array);
 }, 90000);
 
 it('should not register a user with a weak password', async () => {
@@ -364,7 +375,8 @@ it('should not register a user with a weak password', async () => {
   console.log('Response from register with weak password:', res.body);
 
   expect(res.statusCode).toEqual(400);
-  expect(res.body).toHaveProperty('error');
+  expect(res.body).toHaveProperty('errors');
+  expect(res.body.errors).toBeInstanceOf(Array);
 }, 90000);
 
 it('should login a registered user successfully with correct credentials', async () => {
@@ -418,7 +430,9 @@ it('should not login a user with incorrect password', async () => {
   console.log('Response from login with incorrect password:', res.body);
 
   expect(res.statusCode).toEqual(400);
-  expect(res.body).toHaveProperty('error', 'Invalid credentials');
+  expect(res.body).toHaveProperty('errors');
+  expect(res.body.errors).toBeInstanceOf(Array);
+  expect(res.body.errors[0]).toHaveProperty('msg', 'Invalid credentials');
 }, 90000);
 
 it('should not login a user with an unregistered email', async () => {
@@ -435,7 +449,9 @@ it('should not login a user with an unregistered email', async () => {
   console.log('Response from login with unregistered email:', res.body);
 
   expect(res.statusCode).toEqual(400);
-  expect(res.body).toHaveProperty('error', 'Invalid credentials');
+  expect(res.body).toHaveProperty('errors');
+  expect(res.body.errors).toBeInstanceOf(Array);
+  expect(res.body.errors[0]).toHaveProperty('msg', 'Invalid credentials');
 }, 90000);
 
 it('should update a user\'s information successfully', async () => {
