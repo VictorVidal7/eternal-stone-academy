@@ -4,7 +4,7 @@ const { check, validationResult } = require('express-validator');
 const userController = require('../controllers/userController');
 const auth = require('../middleware/auth');
 const protect = require('../middleware/protect');
-const role = require('../middleware/role');
+//const role = require('../middleware/role');
 
 router.post(
   '/register',

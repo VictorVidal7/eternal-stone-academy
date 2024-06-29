@@ -668,4 +668,93 @@ describe('User API', () => {
       }
     }, 30000);
   });
+
+  describe('Protected Routes', () => {
+    it('should not allow access to protected routes without authentication', async () => {
+      // Intenta obtener un usuario específico sin token
+      const getUserRes = await request(app)
+        .get('/api/users/someUserId');
+  
+      expect(getUserRes.statusCode).toEqual(401);
+      expect(getUserRes.body).toHaveProperty('msg', 'No token, authorization denied');
+  
+      // Intenta actualizar un usuario sin token
+      const updateRes = await request(app)
+        .put('/api/users/someUserId')
+        .send({ name: 'Updated Name' });
+  
+      expect(updateRes.statusCode).toEqual(401);
+      expect(updateRes.body).toHaveProperty('msg', 'No token, authorization denied');
+  
+      // Intenta eliminar un usuario sin token
+      const deleteRes = await request(app)
+        .delete('/api/users/someUserId');
+  
+      expect(deleteRes.statusCode).toEqual(401);
+      expect(deleteRes.body).toHaveProperty('msg', 'No token, authorization denied');
+  
+      // Intenta cambiar la contraseña sin token
+      const changePasswordRes = await request(app)
+        .put('/api/users/change-password')
+        .send({ currentPassword: 'password123', newPassword: 'newpassword123' });
+  
+      expect(changePasswordRes.statusCode).toEqual(401);
+      expect(changePasswordRes.body).toHaveProperty('msg', 'No token, authorization denied');
+    });
+  });
+
+  describe('Protected Routes with Valid Token', () => {
+    let token;
+    let userId;
+  
+    beforeEach(async () => {
+      // Registrar un nuevo usuario antes de cada prueba
+      const user = {
+        name: 'Test User',
+        email: `testuser${Date.now()}@example.com`,
+        password: 'password123'
+      };
+  
+      const registerRes = await request(app)
+        .post('/api/users/register')
+        .send(user);
+  
+      token = registerRes.body.token;
+      userId = registerRes.body.user.id;
+    });
+  
+    afterEach(async () => {
+      // Eliminar el usuario después de cada prueba
+      await User.findByIdAndDelete(userId);
+    });
+  
+    it('should allow access to protected routes with a valid token', async () => {
+      // Obtener información del usuario
+      const getUserRes = await request(app)
+        .get(`/api/users/${userId}`)
+        .set('x-auth-token', token);
+  
+      expect(getUserRes.statusCode).toEqual(200);
+      expect(getUserRes.body).toHaveProperty('name', 'Test User');
+      expect(getUserRes.body).toHaveProperty('email');
+  
+      // Actualizar información del usuario
+      const updateRes = await request(app)
+        .put(`/api/users/${userId}`)
+        .set('x-auth-token', token)
+        .send({ name: 'Updated Test User' });
+  
+      expect(updateRes.statusCode).toEqual(200);
+      expect(updateRes.body).toHaveProperty('name', 'Updated Test User');
+  
+      // Cambiar contraseña
+      const changePasswordRes = await request(app)
+        .put('/api/users/change-password')
+        .set('x-auth-token', token)
+        .send({ currentPassword: 'password123', newPassword: 'newpassword123' });
+  
+      expect(changePasswordRes.statusCode).toEqual(200);
+      expect(changePasswordRes.body).toHaveProperty('msg', 'Password updated successfully');
+    });
+  });
 });

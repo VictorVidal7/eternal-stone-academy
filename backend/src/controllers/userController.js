@@ -127,9 +127,12 @@ const deleteUser = async (req, res) => {
 };
 
 const getUser = async (req, res) => {
+  console.log('GetUser: Received request for user ID:', req.params.id);
   try {
     const user = await User.findById(req.params.id).select('-password');
+    console.log('GetUser: User found:', user);
     if (!user) {
+      console.log('GetUser: User not found');
       return res.status(404).json({ errors: [{ msg: 'User not found' }] });
     }
     res.json(user);
