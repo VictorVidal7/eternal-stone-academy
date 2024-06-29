@@ -1,62 +1,72 @@
 const mongoose = require('mongoose');
+mongoose.set('strictQuery', false);
 const express = require('express');
 const path = require('path');
 const errorHandler = require('./middleware/errorHandler');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const app = express();
 require('dotenv').config();
+
+const app = express();
 
 const mongoURI = process.env.MONGODB_URI;
 
-async function connectToMongo() {
-  if (mongoose.connection.readyState === 0) {
-    try {
-      await mongoose.connect(mongoURI);
-      console.log('Connected to MongoDB');
-    } catch (err) {
-      console.error('Could not connect to MongoDB', err);
-      process.exit(1);
-    }
+/* async function connectToMongo() {
+  try {
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('Connected to MongoDB');
+  } catch (err) {
+    console.error('Could not connect to MongoDB', err);
+    console.log('Attempting to reconnect...');
+    setTimeout(connectToMongo, 5000);
   }
 }
 
-connectToMongo();
-
-// Configuración de seguridad
-app.use(helmet());
-
-// Configuración de CORS
-app.use(cors());
-
-// Límite de tasa para todas las solicitudes
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100 // límite de 100 solicitudes por ventana por IP
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+  setTimeout(connectToMongo, 5000);
 });
-app.use(limiter);
 
-// Middleware
-app.use(express.json({ limit: '10kb' })); // Limita el tamaño del body
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected. Attempting to reconnect...');
+  setTimeout(connectToMongo, 5000);
+});
+
+connectToMongo(); */
+
+app.use(helmet());
+app.use(cors());
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+}));
+
+app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Rutas
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/courses', require('./routes/courseRoutes'));
 
-// Integración de Swagger
 if (process.env.NODE_ENV !== 'production') {
   const swaggerSetup = require(path.join(__dirname, '..', 'swagger'));
   swaggerSetup(app);
 }
 
-// Manejo de rutas no encontradas
 app.use((req, res, next) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Middleware de manejo de errores
 app.use(errorHandler);
 
 module.exports = app;

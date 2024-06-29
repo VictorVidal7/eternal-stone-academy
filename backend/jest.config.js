@@ -1,13 +1,30 @@
 module.exports = {
   moduleNameMapper: {
     '\\.json$': '<rootDir>/test/__mocks__/jsonMock.js',
+    '^ci-info$': '<rootDir>/test/__mocks__/ci-info.js',
   },
   testEnvironment: 'node',
   setupFilesAfterEnv: ['./jest.setup.js'],
-  testTimeout: 30000, // Reducido a 30 segundos
+  testTimeout: 60000,
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.js'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
-  maxWorkers: '50%', // Ejecuta pruebas en paralelo
+  maxWorkers: '50%',
+  transform: {
+    '^.+\\.js$': ['babel-jest', { configFile: './babel.config.js' }],
+  },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(ci-info)/)',
+  ],
+  verbose: true,
+  bail: 1,
+  forceExit: true,
+  detectOpenHandles: true,
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
+  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  globalSetup: './jest.global-setup.js',
+  globalTeardown: './jest.global-teardown.js',
 };

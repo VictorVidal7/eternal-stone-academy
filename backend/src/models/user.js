@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'student',
   },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
 });
 
 userSchema.index({ email: 1 }, { unique: true });

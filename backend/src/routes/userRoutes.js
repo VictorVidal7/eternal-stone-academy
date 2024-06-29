@@ -6,42 +6,6 @@ const auth = require('../middleware/auth');
 const protect = require('../middleware/protect');
 const role = require('../middleware/role');
 
-/**
- * @swagger
- * tags:
- *   name: Users
- *   description: User management
- */
-
-/**
- * @swagger
- * /api/users/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       201:
- *         description: User registered successfully
- *       400:
- *         description: Invalid input
- */
 router.post(
   '/register',
   [
@@ -54,37 +18,10 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    next();
-  },
-  userController.registerUser
+    userController.registerUser(req, res, next);
+  }
 );
 
-/**
- * @swagger
- * /api/users/login:
- *   post:
- *     summary: Login a user
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *       400:
- *         description: Invalid credentials
- */
 router.post(
   '/login',
   [
@@ -96,99 +33,23 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    next();
-  },
-  userController.loginUser
+    userController.loginUser(req, res, next);
+  }
 );
 
-/**
- * @swagger
- * /api/users/{id}:
- *   put:
- *     summary: Update a user
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: User ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *     responses:
- *       200:
- *         description: User updated successfully
- *       400:
- *         description: Invalid input
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: User not found
- */
-router.put('/:id', auth, protect, userController.updateUser);
+router.put('/change-password', [auth, protect], (req, res, next) => userController.changePassword(req, res, next));
 
-/**
- * @swagger
- * /api/users/{id}:
- *   delete:
- *     summary: Delete a user
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: User ID
- *     responses:
- *       200:
- *         description: User deleted successfully
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: User not found
- */
-router.delete('/:id', auth, protect, userController.deleteUser);
+//router.put('/:id', [auth, protect], (req, res, next) => userController.updateUser(req, res, next));
+router.put('/:id', [auth, protect], userController.updateUser);
 
-/**
- * @swagger
- * /api/users/{id}:
- *   get:
- *     summary: Get a user by ID
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: User ID
- *     responses:
- *       200:
- *         description: User details retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       404:
- *         description: User not found
- */
-router.get('/:id', auth, protect, role(['admin', 'student']), userController.getUser);
+//router.delete('/:id', [auth, protect], (req, res, next) => userController.deleteUser(req, res, next));
+router.delete('/:id', [auth, protect], userController.deleteUser);
+
+//router.get('/:id', [auth, protect, role(['admin', 'student'])], (req, res, next) => userController.getUser(req, res, next));
+router.get('/:id', [auth, protect], userController.getUser);
+
+router.post('/forgot-password', (req, res, next) => userController.forgotPassword(req, res, next));
+
+router.put('/reset-password/:resettoken', (req, res, next) => userController.resetPassword(req, res, next));
 
 module.exports = router;
