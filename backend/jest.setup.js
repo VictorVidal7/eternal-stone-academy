@@ -13,7 +13,7 @@ beforeAll(async () => {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 5000,
-    driverInfo: { name: "Mongoose", version: "6.11.2" }  // Add this line
+    driverInfo: { name: "Mongoose", version: "6.11.2" }
   };
 
   console.log('Connecting to MongoDB');
@@ -24,7 +24,8 @@ beforeAll(async () => {
 afterAll(async () => {
   console.log('Closing MongoDB connection in jest.setup.js...');
   await mongoose.connection.close();
-  console.log('MongoDB connection closed successfully.');
+  await mongod.stop();
+  console.log('MongoDB connection closed and server stopped successfully.');
 });
 
 beforeEach(async () => {

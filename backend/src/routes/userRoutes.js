@@ -4,7 +4,7 @@ const { check, validationResult } = require('express-validator');
 const userController = require('../controllers/userController');
 const auth = require('../middleware/auth');
 const protect = require('../middleware/protect');
-//const role = require('../middleware/role');
+const checkRole = require('../middleware/role');
 
 router.post(
   '/register',
@@ -37,19 +37,19 @@ router.post(
   }
 );
 
-router.put('/change-password', [auth, protect], (req, res, next) => userController.changePassword(req, res, next));
+router.put('/change-password', [auth, protect], userController.changePassword);
 
-//router.put('/:id', [auth, protect], (req, res, next) => userController.updateUser(req, res, next));
+router.put('/change-role', [auth, protect, checkRole(['admin'])], userController.changeUserRole);
+
+router.post('/forgot-password', userController.forgotPassword);
+
+router.put('/reset-password/:resettoken', userController.resetPassword);
+
+// Estas rutas deben ir al final para evitar conflictos con las rutas específicas anteriores
 router.put('/:id', [auth, protect], userController.updateUser);
 
-//router.delete('/:id', [auth, protect], (req, res, next) => userController.deleteUser(req, res, next));
 router.delete('/:id', [auth, protect], userController.deleteUser);
 
-//router.get('/:id', [auth, protect, role(['admin', 'student'])], (req, res, next) => userController.getUser(req, res, next));
-router.get('/:id', [auth, protect], userController.getUser);
-
-router.post('/forgot-password', (req, res, next) => userController.forgotPassword(req, res, next));
-
-router.put('/reset-password/:resettoken', (req, res, next) => userController.resetPassword(req, res, next));
+router.get('/:id', [auth, protect, checkRole(['admin', 'instructor', 'student'])], userController.getUser);
 
 module.exports = router;

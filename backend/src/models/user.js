@@ -14,17 +14,16 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    minlength: 6, // Asegurarse de que este campo esté presente para la longitud mínima
+    minlength: 6,
   },
   role: {
     type: String,
-    default: 'student',
+    enum: ['admin', 'instructor', 'student'],
+    default: 'student'
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
 });
-
-userSchema.index({ email: 1 }, { unique: true });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
