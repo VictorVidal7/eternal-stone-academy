@@ -226,7 +226,7 @@ exports.changeUserRole = async (req, res) => {
     const { userId, newRole } = req.body;
     
     if (req.user.role !== 'admin') {
-      return res.status(403).json({ errors: [{ msg: 'Not authorized to change user roles' }] });
+      return res.status(403).json({ errors: [{ msg: 'Access denied. Required role not found.' }] });
     }
 
     const user = await User.findById(userId);
@@ -241,7 +241,7 @@ exports.changeUserRole = async (req, res) => {
     user.role = newRole;
     await user.save();
 
-    res.json({ msg: 'User role updated successfully', user });
+    res.json({ msg: 'User role updated successfully', user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (error) {
     console.error('Change User Role Error:', error);
     res.status(500).json({ errors: [{ msg: 'Server error' }] });

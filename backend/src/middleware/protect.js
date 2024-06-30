@@ -14,7 +14,8 @@ module.exports = async (req, res, next) => {
     if (!req.user) {
       return res.status(404).json({ errors: [{ msg: 'User not found' }] });
     }
-    req.user.role = req.user.role || 'student'; // Asegura que siempre haya un rol
+    req.user.role = req.user.role || 'student';
+    console.log('User role in protect middleware:', req.user.role);
     next();
   } catch (error) {
     res.status(401).json({ errors: [{ msg: 'Token is not valid' }] });
