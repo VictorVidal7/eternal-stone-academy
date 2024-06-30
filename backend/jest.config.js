@@ -5,7 +5,7 @@ module.exports = {
   },
   testEnvironment: 'node',
   setupFilesAfterEnv: ['./jest.setup.js'],
-  testTimeout: 120000,
+  testTimeout: 60000,
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.js'],
   coverageDirectory: 'coverage',
@@ -25,6 +25,7 @@ module.exports = {
   resetMocks: true,
   restoreMocks: true,
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  maxConcurrency: 1,
   globalSetup: './jest.global-setup.js',
   globalTeardown: './jest.global-teardown.js',
 };

@@ -12,19 +12,17 @@ function createApp() {
   const app = express();
 
   // Conexión a MongoDB
-  if (process.env.NODE_ENV !== 'test') {
-    const mongoUri = process.env.MONGODB_URI;
-    mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
-      driverInfo: { name: "nodejs", version: process.version }
-    }).then(() => {
-      console.log('Connected to MongoDB');
-    }).catch((error) => {
-      console.error('Error connecting to MongoDB:', error);
-    });
-  }
+  const mongoUri = process.env.MONGODB_URI;
+  mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000,
+    driverInfo: { name: "nodejs", version: process.version }
+  }).then(() => {
+    console.log('Connected to MongoDB');
+  }).catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+  });
 
   // Middleware de seguridad
   app.use(helmet());
@@ -45,9 +43,11 @@ function createApp() {
   app.use('/api/users', require('./routes/userRoutes'));
   app.use('/api/courses', require('./routes/courseRoutes'));
   app.use('/api/admin', require('./routes/adminRoutes'));
+  
 
   // Manejo de rutas no encontradas
   app.use((req, res, next) => {
+    console.log('Route not found:', req.method, req.path);
     const error = new Error('Route not found');
     error.status = 404;
     next(error);
@@ -56,14 +56,10 @@ function createApp() {
   // Manejo de errores
   app.use((err, req, res, next) => {
     console.error(err.stack);
-    
-    const status = err.status || 500;
-    const message = err.message || 'Internal Server Error';
-
-    res.status(status).json({
+    res.status(err.status || 500).json({
       error: {
-        message: message,
-        status: status
+        message: err.message || 'Internal Server Error',
+        status: err.status || 500
       }
     });
   });

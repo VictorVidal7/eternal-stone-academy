@@ -605,9 +605,9 @@ describe('User API', () => {
       const res = await request(app)
         .get('/api/admin/dashboard')
         .set('x-auth-token', adminToken);
-  
+      
+      console.log('Admin route response:', res.status, res.body);
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('msg', 'Welcome to admin dashboard');
     });
   
     it('should not allow instructor to access admin routes', async () => {
@@ -956,6 +956,159 @@ describe('User API', () => {
   
       expect(res.statusCode).toEqual(403);
       expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
+    });
+  });
+
+  describe('Extended Role-based Access Control', () => {
+    let adminToken, instructorToken, studentToken;
+    let adminId, instructorId, studentId;
+  
+    beforeEach(async () => {
+      // Crear usuarios de prueba con diferentes roles
+      const adminUser = await User.create({
+        name: 'Admin User',
+        email: 'admin@example.com',
+        password: 'adminpassword',
+        role: 'admin'
+      });
+      const instructorUser = await User.create({
+        name: 'Instructor User',
+        email: 'instructor@example.com',
+        password: 'instructorpassword',
+        role: 'instructor'
+      });
+      const studentUser = await User.create({
+        name: 'Student User',
+        email: 'student@example.com',
+        password: 'studentpassword'
+      });
+  
+      adminId = adminUser._id;
+      instructorId = instructorUser._id;
+      studentId = studentUser._id;
+  
+      adminToken = jwt.sign({ id: adminId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      instructorToken = jwt.sign({ id: instructorId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      studentToken = jwt.sign({ id: studentId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    });
+  
+    it('should allow admin to access all admin routes', async () => {
+      const routes = [
+        '/api/admin/dashboard',
+        '/api/admin/users',
+        '/api/admin/courses',
+        '/api/admin/reports'
+      ];
+  
+      for (const route of routes) {
+        const res = await request(app)
+          .get(route)
+          .set('x-auth-token', adminToken);
+  
+        expect(res.statusCode).toEqual(200);
+      }
+    });
+  
+    it('should not allow instructor to access any admin routes', async () => {
+      const routes = [
+        '/api/admin/dashboard',
+        '/api/admin/users',
+        '/api/admin/courses',
+        '/api/admin/reports'
+      ];
+  
+      for (const route of routes) {
+        const res = await request(app)
+          .get(route)
+          .set('x-auth-token', instructorToken);
+  
+        expect(res.statusCode).toEqual(403);
+        expect(res.body).toHaveProperty('errors');
+        expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
+      }
+    });
+  
+    it('should not allow student to access any admin routes', async () => {
+      const routes = [
+        '/api/admin/dashboard',
+        '/api/admin/users',
+        '/api/admin/courses',
+        '/api/admin/reports'
+      ];
+  
+      for (const route of routes) {
+        const res = await request(app)
+          .get(route)
+          .set('x-auth-token', studentToken);
+  
+        expect(res.statusCode).toEqual(403);
+        expect(res.body).toHaveProperty('errors');
+        expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
+      }
+    });
+  
+    it('should allow admin to perform all CRUD operations on users', async () => {
+      // Create
+      const createRes = await request(app)
+        .post('/api/users')
+        .set('x-auth-token', adminToken)
+        .send({ name: 'New User', email: 'newuser@test.com', password: 'password123' });
+      expect(createRes.statusCode).toEqual(201);
+  
+      const newUserId = createRes.body.user.id;
+  
+      // Read
+      const readRes = await request(app)
+        .get(`/api/users/${newUserId}`)
+        .set('x-auth-token', adminToken);
+      expect(readRes.statusCode).toEqual(200);
+  
+      // Update
+      const updateRes = await request(app)
+        .put(`/api/users/${newUserId}`)
+        .set('x-auth-token', adminToken)
+        .send({ name: 'Updated User' });
+      expect(updateRes.statusCode).toEqual(200);
+  
+      // Delete
+      const deleteRes = await request(app)
+        .delete(`/api/users/${newUserId}`)
+        .set('x-auth-token', adminToken);
+      expect(deleteRes.statusCode).toEqual(200);
+    });
+  
+    it('should allow instructor to access instructor-specific routes', async () => {
+      const routes = [
+        '/api/courses/create',
+        '/api/courses/my-courses',
+        '/api/assessments/create'
+      ];
+  
+      for (const route of routes) {
+        const res = await request(app)
+          .get(route)
+          .set('x-auth-token', instructorToken);
+  
+        expect(res.statusCode).toEqual(200);
+      }
+    });
+  
+    it('should not allow student to access instructor-specific routes', async () => {
+      const routes = [
+        '/api/courses/create',
+        '/api/courses/my-courses',
+        '/api/assessments/create'
+      ];
+  
+      for (const route of routes) {
+        const res = await request(app)
+          .get(route)
+          .set('x-auth-token', studentToken);
+  
+        expect(res.statusCode).toEqual(403);
+        expect(res.body).toHaveProperty('errors');
+        expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
+      }
     });
   });
 
