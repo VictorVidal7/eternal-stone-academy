@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const request = require('supertest');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
@@ -860,6 +861,100 @@ describe('User API', () => {
   
       expect(res.statusCode).toEqual(403);
       expect(res.body).toHaveProperty('errors');
+      expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
+    });
+  });
+
+  describe('Student Role Change Restrictions', () => {
+    let app;
+    let studentToken, studentId, anotherStudentId, instructorId, adminId;
+  
+    beforeAll(async () => {
+      app = createApp();
+    });
+  
+    afterAll(async () => {
+      await mongoose.connection.close();
+    });
+  
+    beforeEach(async () => {
+      // Limpiar la base de datos antes de cada prueba
+      await User.deleteMany({});
+  
+      // Crear usuarios de prueba
+      const studentUser = await User.create({
+        name: 'Test Student',
+        email: 'student@test.com',
+        password: 'password123',
+        role: 'student'
+      });
+      studentId = studentUser._id;
+  
+      const anotherStudentUser = await User.create({
+        name: 'Another Student',
+        email: 'anotherstudent@test.com',
+        password: 'password123',
+        role: 'student'
+      });
+      anotherStudentId = anotherStudentUser._id;
+  
+      const instructorUser = await User.create({
+        name: 'Test Instructor',
+        email: 'instructor@test.com',
+        password: 'password123',
+        role: 'instructor'
+      });
+      instructorId = instructorUser._id;
+  
+      const adminUser = await User.create({
+        name: 'Test Admin',
+        email: 'admin@test.com',
+        password: 'password123',
+        role: 'admin'
+      });
+      adminId = adminUser._id;
+  
+      // Generar token para el estudiante
+      studentToken = jwt.sign({ id: studentId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    });
+  
+    it('should not allow student to change their own role', async () => {
+      const res = await request(app)
+        .put('/api/users/change-role')
+        .set('x-auth-token', studentToken)
+        .send({ userId: studentId, newRole: 'instructor' });
+  
+      expect(res.statusCode).toEqual(403);
+      expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
+    });
+  
+    it('should not allow student to change another student\'s role', async () => {
+      const res = await request(app)
+        .put('/api/users/change-role')
+        .set('x-auth-token', studentToken)
+        .send({ userId: anotherStudentId, newRole: 'instructor' });
+  
+      expect(res.statusCode).toEqual(403);
+      expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
+    });
+  
+    it('should not allow student to change an instructor\'s role', async () => {
+      const res = await request(app)
+        .put('/api/users/change-role')
+        .set('x-auth-token', studentToken)
+        .send({ userId: instructorId, newRole: 'student' });
+  
+      expect(res.statusCode).toEqual(403);
+      expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
+    });
+  
+    it('should not allow student to change an admin\'s role', async () => {
+      const res = await request(app)
+        .put('/api/users/change-role')
+        .set('x-auth-token', studentToken)
+        .send({ userId: adminId, newRole: 'student' });
+  
+      expect(res.statusCode).toEqual(403);
       expect(res.body.errors[0]).toHaveProperty('msg', 'Access denied. Required role not found.');
     });
   });

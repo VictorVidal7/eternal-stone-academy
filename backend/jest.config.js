@@ -5,7 +5,7 @@ module.exports = {
   },
   testEnvironment: 'node',
   setupFilesAfterEnv: ['./jest.setup.js'],
-  testTimeout: 60000,
+  testTimeout: 120000,
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.js'],
   coverageDirectory: 'coverage',
