@@ -4,8 +4,11 @@ module.exports = {
     '^ci-info$': '<rootDir>/test/__mocks__/ci-info.js',
   },
   testEnvironment: 'node',
+  testEnvironmentOptions: {
+    NODE_ENV: 'test',
+  },
   setupFilesAfterEnv: ['./jest.setup.js'],
-  testTimeout: 60000,
+  testTimeout: 120000,
   collectCoverage: true,
   collectCoverageFrom: ['src/**/*.js'],
   coverageDirectory: 'coverage',

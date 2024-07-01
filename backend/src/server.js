@@ -1,42 +1,38 @@
 const http = require('http');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const createApp = require('./app');
-const connectDB = require('./config/db');
+const app = require('./app');
 
 const env = process.env.NODE_ENV || 'development';
 dotenv.config({ path: `.env.${env}` });
 
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   try {
-    await connectDB();
-    const app = createApp();
-    const server = http.createServer(app);
-
-    server.listen(port, () => {
-      console.log(`Server running on port ${port} in ${env} mode`);
-    });
-
-    // Manejo de cierre graceful
-    const gracefulShutdown = () => {
-      console.log('Shutting down gracefully');
-      server.close(() => {
-        console.log('HTTP server closed');
-        mongoose.connection.close(false, () => {
-          console.log('MongoDB connection closed');
-          process.exit(0);
-        });
+    if (process.env.NODE_ENV !== 'test') {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000,
+        connectTimeoutMS: 30000,
+        driverInfo: { name: "nodejs", version: "6.0.12" }
       });
-    };
-
-    process.on('SIGTERM', gracefulShutdown);
-    process.on('SIGINT', gracefulShutdown);
+      console.log('Connected to MongoDB');
+      
+      const server = http.createServer(app);
+      server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT} in ${env} mode`);
+      });
+    }
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
 }
 
-startServer();
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
+
+module.exports = app;

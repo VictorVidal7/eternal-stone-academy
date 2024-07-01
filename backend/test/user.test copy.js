@@ -1,17 +1,24 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const User = require('../src/models/user');
-const app = require('../src/app');
+const createApp = require('../src/app');
+const { setup, teardown } = require('../jest.setup');
 
 describe('User API', () => {
-  beforeAll(async () => {
-    // La conexión a la base de datos ya se maneja en jest.setup.js
-  });
+  let server, app;
 
+  beforeAll(async () => {
+    await setup();
+    app = createApp();
+    server = app.listen(5000);
+  });
+  
   afterAll(async () => {
-    await mongoose.disconnect();
+    await teardown();
+    if (server) {
+      await new Promise((resolve) => server.close(resolve));
+    }
   });
 
   beforeEach(async () => {

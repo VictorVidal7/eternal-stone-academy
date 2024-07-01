@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 module.exports = async () => {
   console.log('Starting global teardown...');
   try {

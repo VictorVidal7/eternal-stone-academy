@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
-exports.registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
     let user = await User.findOne({ email });
@@ -20,18 +20,23 @@ exports.registerUser = async (req, res) => {
     await user.save();
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    console.log('Register User: Registered user:', user);
-    console.log('Register User: Token generated:', token);
 
-    res.status(201).json({ user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
+    res.status(201).json({ 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role 
+      }, 
+      token 
+    });
   } catch (error) {
     console.error('Register User: Error during registration:', error.message);
     res.status(500).json({ errors: [{ msg: 'Server error' }] });
   }
 };
 
-exports.loginUser = async (req, res) => {
-  console.log('Login User: Request body:', req.body);
+const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -41,24 +46,29 @@ exports.loginUser = async (req, res) => {
     }
 
     const isMatch = await user.comparePassword(password);
-    console.log('Login User: Password match:', isMatch);
-
     if (!isMatch) {
       return res.status(400).json({ errors: [{ msg: 'Invalid credentials' }] });
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    console.log('Login User: Token generated:', token);
 
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.json({ 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role 
+      }, 
+      token 
+    });
   } catch (error) {
     console.error('Login User: Error during login:', error.message);
     res.status(500).json({ errors: [{ msg: 'Server error' }] });
   }
 };
 
-exports.updateUser = async (req, res) => {
-  const { name, email, password } = req.body;
+const updateUser = async (req, res) => {
+  const { name, email } = req.body;
   const userId = req.params.id;
 
   try {
@@ -67,48 +77,33 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({ errors: [{ msg: 'User not found' }] });
     }
 
-    // Validaciones
-    if (name && name.trim().length < 2) {
-      return res.status(400).json({ errors: [{ msg: 'Name must be at least 2 characters long' }] });
-    }
-
+    if (name) user.name = name;
     if (email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ errors: [{ msg: 'Invalid email format' }] });
-      }
-      
       const existingUser = await User.findOne({ email, _id: { $ne: userId } });
       if (existingUser) {
         return res.status(400).json({ errors: [{ msg: 'Email already in use' }] });
       }
-    }
-
-    if (password && password.length < 6) {
-      return res.status(400).json({ errors: [{ msg: 'Password must be at least 6 characters long' }] });
-    }
-
-    // Actualización de campos
-    if (name) user.name = name.trim();
-    if (email) user.email = email.trim();
-    if (password) {
-      user.password = await bcrypt.hash(password, 10);
+      user.email = email;
     }
 
     await user.save();
 
-    res.json({ name: user.name, email: user.email, role: user.role });
+    res.json({ 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role 
+      }
+    });
   } catch (error) {
     console.error('Update User: Error during update:', error.message);
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ errors: Object.values(error.errors).map(err => ({ msg: err.message })) });
-    }
     res.status(500).json({ errors: [{ msg: 'Server error' }] });
   }
 };
 
-exports.deleteUser = async (req, res) => {
-  const userId = req.params.id === 'me' ? req.user.id : req.params.id;
+const deleteUser = async (req, res) => {
+  const userId = req.params.id;
   try {
     const user = await User.findByIdAndDelete(userId);
     if (!user) {
@@ -121,22 +116,27 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-exports.getUser = async (req, res) => {
+const getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
       return res.status(404).json({ errors: [{ msg: 'User not found' }] });
     }
-    res.json({ user });
+    res.json({ 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role 
+      }
+    });
   } catch (error) {
     console.error('Get User: Error during retrieval:', error.message);
     res.status(500).json({ errors: [{ msg: 'Server error' }] });
   }
 };
 
-exports.changePassword = async (req, res) => {
-  console.log('Change Password: Request body:', req.body);
-  console.log('Change Password: User:', req.user);
+const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   const userId = req.user.id;
 
@@ -155,7 +155,7 @@ exports.changePassword = async (req, res) => {
       return res.status(400).json({ errors: [{ msg: 'New password must be at least 6 characters long' }] });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = newPassword;
     await user.save();
 
     res.json({ msg: 'Password updated successfully' });
@@ -165,7 +165,7 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-exports.forgotPassword = async (req, res) => {
+const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
@@ -192,11 +192,14 @@ exports.forgotPassword = async (req, res) => {
     res.json({ msg: 'Email sent' });
   } catch (error) {
     console.error('Forgot Password Error:', error);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
     res.status(500).json({ errors: [{ msg: 'Email could not be sent' }] });
   }
 };
 
-exports.resetPassword = async (req, res) => {
+const resetPassword = async (req, res) => {
   const resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
 
   try {
@@ -209,7 +212,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ errors: [{ msg: 'Invalid or expired token' }] });
     }
 
-    user.password = await bcrypt.hash(req.body.password, 10);
+    user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
@@ -221,7 +224,7 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-exports.changeUserRole = async (req, res) => {
+const changeUserRole = async (req, res) => {
   try {
     const { userId, newRole } = req.body;
     
@@ -241,9 +244,29 @@ exports.changeUserRole = async (req, res) => {
     user.role = newRole;
     await user.save();
 
-    res.json({ msg: 'User role updated successfully', user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.json({ 
+      msg: 'User role updated successfully', 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role 
+      } 
+    });
   } catch (error) {
     console.error('Change User Role Error:', error);
     res.status(500).json({ errors: [{ msg: 'Server error' }] });
   }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  updateUser,
+  deleteUser,
+  getUser,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  changeUserRole
 };
