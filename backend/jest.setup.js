@@ -8,12 +8,12 @@ beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
 
+    // Configura mongoose
+    mongoose.set('strictQuery', false);
+
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      driverInfo: { name: "nodejs", version: "6.0.12" }  // Versión que coincide con Mongoose
     });
 
     console.log('Connected successfully to in-memory MongoDB instance');

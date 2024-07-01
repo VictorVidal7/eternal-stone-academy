@@ -3,11 +3,15 @@ const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
 const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
 require('dotenv').config();
 
 const app = express();
+
+// Configuración de mongoose
+mongoose.set('strictQuery', false);
 
 // Middleware de seguridad
 app.use(helmet());
@@ -39,5 +43,18 @@ app.use((req, res, next) => {
 
 // Manejo de errores
 app.use(errorHandler);
+
+// Conexión a MongoDB (solo si no estamos en modo de prueba)
+if (process.env.NODE_ENV !== 'test') {
+  const mongoUri = process.env.MONGODB_URI;
+  mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000,
+    connectTimeoutMS: 30000,
+  })
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('Error connecting to MongoDB:', err));
+}
 
 module.exports = app;
